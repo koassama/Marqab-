@@ -39,7 +39,11 @@
   h1 span { font-weight: 400; }
   .month { color: var(--muted); font-size: 13px; margin-top: 2px; }
   .gear { background: none; border: none; color: var(--muted); padding: 6px; border-radius: 10px; }
-  .gear:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .gear:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input:focus-visible { outline: none; }
+  .note:focus, .field input:focus { box-shadow: 0 0 0 1px var(--accent); }
+  input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
   .tabs { display: flex; background: var(--chip); border-radius: 12px; padding: 3px; margin-bottom: 16px; }
   .tab { flex: 1; background: none; border: none; color: var(--muted); padding: 9px; border-radius: 10px; font-size: 14px; font-weight: 500; }
@@ -58,8 +62,12 @@
   .note::placeholder { color: var(--muted); }
 
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
-  .cat { background: var(--bg); border: 1px solid transparent; border-radius: 14px; padding: 14px 8px; font-size: 15px; font-weight: 500; color: var(--text); transition: background .15s, border-color .15s; }
-  .cat.sel { background: var(--soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .cat { background: var(--bg); border: 1px solid transparent; border-radius: 14px; padding: 11px 8px 10px; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 2px; transition: background .15s; }
+  .cat .cn { font-size: 15px; font-weight: 600; }
+  .cat .cl { font-size: 12px; color: var(--muted); }
+  .cat.low .cl { color: var(--bad); }
+  .cat.flash { background: var(--soft); border-color: var(--accent); }
+  .taphint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 12px; }
   .cat:active { transform: scale(.97); }
 
   .primary { width: 100%; margin-top: 14px; border: none; border-radius: 14px; background: var(--text); color: #fff; padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
@@ -92,6 +100,21 @@
   .sumrow { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
   .sumrow span { color: var(--muted); }
 
+  .hint { color: var(--muted); font-size: 13px; text-align: center; margin-top: 10px; }
+  .leftbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 4px 12px; margin: -6px 0 6px; }
+  .leftbar .row { align-items: center; margin-bottom: 8px; }
+  .leftbar b { font-size: 24px; font-weight: 700; letter-spacing: -.2px; }
+  .leftbar .bar { background: var(--chip); }
+  .leftnote { color: var(--muted); font-size: 13px; margin-top: 7px; min-height: 18px; }
+  .leftbar.over b, .leftbar.over .leftnote { color: var(--bad); }
+  .leftbar.over .fill { background: var(--bad); }
+  #planRows .prow:last-child { border-bottom: none; }
+  .monthrow { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .monthrow .month { margin-top: 0; }
+  .next { background: var(--chip); border: none; border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 600; color: var(--text); }
+  .next.due { background: var(--text); color: #fff; }
+  .pace { color: var(--muted); font-size: 12px; margin-top: 5px; }
+  .wide { display: block; width: 100%; text-align: left; padding: 13px 14px; margin-top: 8px; font-size: 15px; color: var(--text); }
   .field { margin-bottom: 14px; }
   .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
   .field input { width: 100%; background: var(--bg); border: none; border-radius: 12px; padding: 12px 14px; font-size: 16px; color: var(--text); outline: none; }
@@ -120,11 +143,18 @@
   <!-- Main app -->
   <section id="app" class="hidden">
     <header>
-      <div><h1>MARQAB <span>BUDGET</span></h1><div class="month" id="month"></div></div>
+      <div><h1>MARQAB <span>BUDGET</span></h1><div class="monthrow"><span class="month" id="month"></span><button class="next hidden" id="nextMonth">Next month</button></div></div>
       <button class="gear" id="gear" aria-label="Settings">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </header>
+
+    <div class="card hidden" id="settings">
+      <div class="label">Settings</div>
+      <button class="ghost wide hidden" id="goBack"></button>
+      <button class="ghost wide" id="changeCfg">Change app link or secret code</button>
+      <button class="ghost wide" id="closeSettings">Close</button>
+    </div>
 
     <div class="tabs" role="tablist">
       <button class="tab on" id="tTrack" role="tab">Track</button>
@@ -136,7 +166,7 @@
         <input id="amt" class="amount" type="number" inputmode="decimal" placeholder="0" aria-label="Amount in SAR">
         <input id="note" class="note" placeholder="Note (optional)">
         <div class="grid" id="cats"></div>
-        <button class="primary" id="deduct">Deduct</button>
+        <p class="taphint">Type the amount, then tap a pot to deduct it.</p>
       </div>
       <div class="msg" id="msg" role="status"></div>
 
@@ -154,11 +184,20 @@
 
     <div id="planView" class="hidden">
       <div class="card">
-        <div class="label" id="planTitle">Plan this month</div>
+        <div class="label" id="planTitle">Money to plan</div>
+        <input id="avail" class="amount" type="number" inputmode="decimal" placeholder="0" aria-label="Money to plan this month in SAR">
+        <p class="hint">Start here: how much you have for this month, after rent and fixed bills.</p>
+      </div>
+
+      <div class="leftbar" id="leftbar">
+        <div class="row"><span class="label" style="margin:0">Left to plan</span><b id="pLeft">0 SAR</b></div>
+        <div class="bar"><div class="fill" id="pFill" style="width:0%"></div></div>
+        <div class="leftnote" id="pNote"></div>
+      </div>
+
+      <div class="card">
+        <div class="label">Your pots</div>
         <div id="planRows"></div>
-        <div class="prow"><b>Available</b><input id="avail" type="number" inputmode="decimal"></div>
-        <div class="sumrow" style="margin-top:12px"><span>Total planned</span><b id="pTotal">0</b></div>
-        <div class="sumrow"><span>Not planned yet</span><b id="pLeft">0</b></div>
         <button class="primary" id="savePlan">Save plan</button>
       </div>
       <div class="msg" id="pmsg" role="status"></div>
@@ -179,7 +218,6 @@
 
   let cfg = store.get('sb-config');
   let data = store.get('sb-cache');
-  let selected = null;
 
   // ---------- API ----------
   async function api(action, extra) {
@@ -215,7 +253,29 @@
       setMsg('cfgMsg', e.message === 'Wrong code' ? 'That code doesn’t match the one in Api.gs' : 'Couldn’t connect. Check the link and that the deployment is set to Anyone.', true);
     }
   };
-  $('gear').onclick = () => { if (confirm('Change the app link or secret code?')) showSetup(); };
+  $('gear').onclick = () => $('settings').classList.toggle('hidden');
+  $('closeSettings').onclick = () => $('settings').classList.add('hidden');
+  $('changeCfg').onclick = () => { $('settings').classList.add('hidden'); showSetup(); };
+  $('goBack').onclick = async () => {
+    if (!data || !data.prevMonth) return;
+    if (!confirm(`Go back to ${data.prevMonth}? ${data.month} will be closed, and its spending counts in ${data.prevMonth} again.`)) return;
+    setMsg('msg', 'Going back…');
+    try { render(await api('prevMonth')); $('settings').classList.add('hidden'); setMsg('msg', `Back in ${data.month}`); }
+    catch (e) { setMsg('msg', 'Couldn’t go back: ' + e.message, true); }
+  };
+  $('nextMonth').onclick = async () => {
+    if (!data || !data.nextMonth) return;
+    if (!confirm(`Start ${data.nextMonth}? Your pots refill and spending starts from zero.`)) return;
+    $('nextMonth').disabled = true; setMsg('msg', `Starting ${data.nextMonth}…`);
+    try {
+      render(await api('nextMonth'));
+      setMsg('msg', '');
+      show('plan', `${data.month} started. Set your plan and save.`);
+    } catch (e) {
+      setMsg('msg', e.message === 'Unknown action' ? 'Update Code.gs and Api.gs in Apps Script first.' : 'Couldn’t start the month: ' + e.message, true);
+    }
+    $('nextMonth').disabled = false;
+  };
 
   // ---------- Rendering ----------
   function setMsg(id, t, err) { const el = $(id); el.textContent = t; el.classList.toggle('err', !!err); }
@@ -223,41 +283,52 @@
   function render(d) {
     if (!d) return;
     data = d; store.set('sb-cache', d);
+    $('month').textContent = d.month || '';
+    const nb = $('nextMonth');
+    nb.classList.toggle('hidden', !d.nextMonth);
+    const due = typeof d.daysLeft === 'number' && d.daysLeft <= 0;
+    nb.classList.toggle('due', due);
+    nb.textContent = due ? 'Salary in? Start next month' : 'Next month';
+    $('goBack').classList.toggle('hidden', !d.prevMonth);
+    $('goBack').textContent = d.prevMonth ? 'Go back to ' + d.prevMonth : '';
     const cats = $('cats');
-    if (cats.children.length !== d.cats.length) {
-      cats.innerHTML = '';
-      d.cats.forEach(c => {
-        const b = document.createElement('button');
-        b.className = 'cat' + (c.name === selected ? ' sel' : '');
-        b.textContent = c.name;
-        b.onclick = () => {
-          selected = c.name;
-          cats.querySelectorAll('.cat').forEach(x => x.classList.toggle('sel', x === b));
-        };
-        cats.appendChild(b);
-      });
-    }
+    cats.innerHTML = '';
+    d.cats.forEach(c => {
+      const b = document.createElement('button');
+      const left = Number(c.left);
+      b.className = 'cat' + (left <= 0 ? ' low' : '');
+      b.innerHTML = `<span class="cn">${esc(c.name)}</span><span class="cl">${left < 0 ? fmt(-left) + ' over' : fmt(left) + ' left'}</span>`;
+      b.setAttribute('aria-label', `Deduct from ${c.name}, ${fmt(left)} left`);
+      b.onclick = () => deduct(c.name);
+      cats.appendChild(b);
+    });
     let total = 0;
     $('pots').innerHTML = d.cats.map(c => {
       total += Number(c.left);
       const pct = c.budget > 0 ? Math.min(100, Math.max(0, (c.spent / c.budget) * 100)) : 0;
       const cls = pct >= 100 ? 'bad' : pct >= 80 ? 'warn' : '';
       return `<div class="pot"><div class="row"><span>${esc(c.name)}</span><span class="left">${fmt(c.left)} left of ${fmt(c.budget)}</span></div>
-        <div class="bar"><div class="fill ${cls}" style="width:${pct}%"></div></div></div>`;
+        <div class="bar"><div class="fill ${cls}" style="width:${pct}%"></div></div>${paceLine(c, d)}</div>`;
     }).join('');
     $('total').textContent = fmt(total) + ' SAR';
     $('recent').innerHTML = d.recent && d.recent.length
       ? d.recent.map(r => `<div class="item"><div>${esc(r.cat)}<small>${esc(r.date)}${r.note ? ', ' + esc(r.note) : ''}</small></div><b>−${fmt(r.amt)}</b></div>`).join('')
       : '<div class="empty">Nothing logged this month yet.</div>';
   }
+  function paceLine(c, d) {
+    if (!c.pace || typeof d.daysLeft !== 'number') return '';
+    if (c.left <= 0) return '<div class="pace">Empty until next month</div>';
+    if (d.daysLeft <= 0) return '';
+    const perDay = Math.floor(c.left / d.daysLeft);
+    return `<div class="pace">about ${fmt(perDay)} a day</div>`;
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
 
   // ---------- Deduct (instant) ----------
-  $('deduct').onclick = () => {
+  function deduct(cat) {
     const amt = Number($('amt').value), note = $('note').value.trim();
-    if (!(amt > 0) || !selected) return setMsg('msg', 'Type an amount and pick a category', true);
+    if (!(amt > 0)) { setMsg('msg', 'Type an amount first', true); $('amt').focus(); return; }
     if (!data) return setMsg('msg', 'Still loading, try again in a second', true);
-    const cat = selected;
     const before = JSON.parse(JSON.stringify(data));
     const d = JSON.parse(JSON.stringify(data));
     const c = d.cats.find(x => x.name === cat);
@@ -265,13 +336,15 @@
     c.left = Number(c.left) - amt;
     d.recent = [{ date: 'Just now', cat: cat, amt: amt, note: note }].concat(d.recent || []).slice(0, 10);
     render(d);
-    setMsg('msg', `Done ✓  ${fmt(c.left)} SAR left in ${cat}`);
+    setMsg('msg', c.left < 0
+      ? `Done ✓  ${cat} is over by ${fmt(-c.left)} SAR`
+      : `Done ✓  ${fmt(c.left)} SAR left in ${cat}`, c.left < 0);
     if (navigator.vibrate) navigator.vibrate(15);
     $('amt').value = ''; $('note').value = ''; $('amt').blur();
     api('add', { category: cat, amount: amt, note: note })
       .then(fresh => { if (fresh) render(fresh); })
       .catch(e => { render(before); setMsg('msg', 'Not saved: ' + e.message + '. Check your internet and try again.', true); });
-  };
+  }
 
   $('undo').onclick = async () => {
     if (!confirm('Remove the last entry?')) return;
@@ -281,36 +354,44 @@
   };
 
   // ---------- Plan ----------
-  function show(view) {
+  function show(view, planMsg) {
     const plan = view === 'plan';
     $('trackView').classList.toggle('hidden', plan);
     $('planView').classList.toggle('hidden', !plan);
     $('tTrack').classList.toggle('on', !plan);
     $('tPlan').classList.toggle('on', plan);
-    if (plan) loadPlan();
+    if (plan) loadPlan(planMsg);
   }
   $('tTrack').onclick = () => show('track');
   $('tPlan').onclick = () => show('plan');
 
-  async function loadPlan() {
+  async function loadPlan(doneMsg) {
     setMsg('pmsg', 'Loading…');
     try {
       const p = await api('getPlan');
-      $('planTitle').textContent = 'Plan for ' + p.month;
+      $('planTitle').textContent = 'Money to plan for ' + p.month;
+      $('avail').value = p.available || '';
       $('planRows').innerHTML = p.cats.map(c =>
-        `<div class="prow"><span>${esc(c.name)}</span><input class="pin" type="number" inputmode="decimal" value="${c.amount}"></div>`).join('');
-      $('avail').value = p.available;
-      document.querySelectorAll('.pin').forEach(i => i.oninput = planTotals);
-      setMsg('pmsg', ''); planTotals();
+        `<div class="prow"><span>${esc(c.name)}</span><input class="pin" type="number" inputmode="decimal" placeholder="0" value="${c.amount || ''}" aria-label="${esc(c.name)} amount in SAR"></div>`).join('');
+      document.querySelectorAll('.pin').forEach(i => { i.oninput = planTotals; i.onfocus = () => i.select(); });
+      setMsg('pmsg', doneMsg || ''); planTotals();
     } catch (e) { setMsg('pmsg', 'Couldn’t load the plan: ' + e.message, true); }
   }
   $('avail').oninput = planTotals;
+  $('avail').onfocus = () => $('avail').select();
   function planTotals() {
+    const avail = Number($('avail').value) || 0;
     const total = [...document.querySelectorAll('.pin')].reduce((s, i) => s + (Number(i.value) || 0), 0);
-    const left = (Number($('avail').value) || 0) - total;
-    $('pTotal').textContent = fmt(total) + ' SAR';
-    $('pLeft').textContent = fmt(left) + ' SAR';
-    $('pLeft').style.color = left < 0 ? 'var(--bad)' : 'var(--text)';
+    const left = avail - total;
+    const over = left < 0;
+    $('leftbar').classList.toggle('over', over);
+    $('pLeft').textContent = (over ? '−' + fmt(-left) : fmt(left)) + ' SAR';
+    $('pFill').style.width = (avail > 0 ? Math.min(100, (total / avail) * 100) : (total > 0 ? 100 : 0)) + '%';
+    $('pNote').textContent =
+      !avail && !total ? 'Type the amount above, then split it between your pots.'
+      : over ? `Over by ${fmt(-left)} SAR. Lower a pot or raise the amount above.`
+      : left === 0 ? `All ${fmt(avail)} SAR planned. Every riyal has a pot.`
+      : `${fmt(total)} planned of ${fmt(avail)}`;
   }
   $('savePlan').onclick = async () => {
     $('savePlan').disabled = true; setMsg('pmsg', 'Saving…');
@@ -330,7 +411,6 @@
   function startApp(d) {
     $('setup').classList.add('hidden');
     $('app').classList.remove('hidden');
-    $('month').textContent = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     if (d) render(d); else { render(data); refresh(); }
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && cfg) refresh(); });
